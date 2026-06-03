@@ -9,17 +9,14 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 import java.util.Arrays;
 
 public class MenuManager implements Listener {
 
-    private final Main plugin;
     private final String mainTitle = "§0Монах";
     private final String shopTitle = "§0Магазин Сфер и Свитков";
 
     public MenuManager(Main plugin) {
-        this.plugin = plugin;
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
@@ -88,24 +85,24 @@ public class MenuManager implements Listener {
             event.setCancelled(true);
             int slot = event.getRawSlot();
             switch (slot) {
-                case 10 -> handlePurchase(player, 5, Material.PAPER, "§cСвиток \"Метеор\"", "meteor");
-                case 11 -> handlePurchase(player, 8, Material.FIREWORK_STAR, "§bСвиток \"Священный Купол\"", "dome");
-                case 12 -> handlePurchase(player, 6, Material.ENDER_PEARL, "§eСвиток \"Подмена Реальности\"", "swap");
-                case 13 -> handlePurchase(player, 7, Material.FEATHER, "§fСвиток \"Печать Безмолвия\"", "silence");
-                case 14 -> handlePurchase(player, 12, Material.REDSTONE, "§4Сфера Вампиризма", "vampire");
-                case 15 -> handlePurchase(player, 15, Material.BLAZE_POWDER, "§6Сфера Берсерка", "berserk");
-                case 16 -> handlePurchase(player, 10, Material.IRON_INGOT, "§7Сфера Magnet", "magnet");
-                case 17 -> handlePurchase(player, 14, Material.FLINT, "§8Сфера Перегрузка", "overload");
-                case 18 -> handlePurchase(player, 18, Material.CLOCK, "§dСфера Хронос", "chronos");
+                case 10 -> handlePurchase(player, 5, "minecraft:paper", "§cСвиток \"Метеор\"");
+                case 11 -> handlePurchase(player, 8, "minecraft:firework_star", "§bСвиток \"Священный Купол\"");
+                case 12 -> handlePurchase(player, 6, "minecraft:ender_pearl", "§eСвиток \"Подмена Реальности\"");
+                case 13 -> handlePurchase(player, 7, "minecraft:feather", "§fСвиток \"Печать Безмолвия\"");
+                case 14 -> handlePurchase(player, 12, "minecraft:redstone", "§4Сфера Вампиризма");
+                case 15 -> handlePurchase(player, 15, "minecraft:blaze_powder", "§6Сфера Берсерка");
+                case 16 -> handlePurchase(player, 10, "minecraft:iron_ingot", "§7Сфера Magnet");
+                case 17 -> handlePurchase(player, 14, "minecraft:flint", "§8Сфера Перегрузка");
+                case 18 -> handlePurchase(player, 18, "minecraft:clock", "§dСфера Хронос");
             }
         }
     }
 
-    private void handlePurchase(Player p, int price, Material m, String name, String key) {
+    private void handlePurchase(Player p, int price, String matKey, String name) {
         int souls = 0;
         for (ItemStack i : p.getInventory().getContents()) {
-            if (i != null && i.getType() == Material.PLAYER_HEAD && i.hasItemMeta()) {
-                if (i.getItemMeta().getPersistentDataContainer().has(plugin.getSoulKey(), PersistentDataType.BYTE)) {
+            if (i != null && i.getType() == Material.PLAYER_HEAD && i.hasItemMeta() && i.getItemMeta().getDisplayName() != null) {
+                if (i.getItemMeta().getDisplayName().contains("Душа")) {
                     souls += i.getAmount();
                 }
             }
@@ -118,8 +115,8 @@ public class MenuManager implements Listener {
         ItemStack[] contents = p.getInventory().getContents();
         for (int i = 0; i < contents.length; i++) {
             ItemStack item = contents[i];
-            if (item != null && item.getType() == Material.PLAYER_HEAD && item.hasItemMeta()) {
-                if (item.getItemMeta().getPersistentDataContainer().has(plugin.getSoulKey(), PersistentDataType.BYTE)) {
+            if (item != null && item.getType() == Material.PLAYER_HEAD && item.hasItemMeta() && item.getItemMeta().getDisplayName() != null) {
+                if (item.getItemMeta().getDisplayName().contains("Душа")) {
                     if (item.getAmount() > take) {
                         item.setAmount(item.getAmount() - take);
                         break;
@@ -132,9 +129,9 @@ public class MenuManager implements Listener {
             }
         }
         
-        // ЖЕСТКИЙ ФИКС ОБХОДА BASECOMPONENT: Выдаем кастомный предмет через чистую команду ванильного Bukkit API
-        String cmd = "minecraft:give " + p.getName() + " " + m.getKey().getKey() + "{display:{Name:'{\"text\":\"" + name + "\",\"italic\":false}'},soul_shop_key:\"" + key + "\"} 1";
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+        // СУПЕР-КОСТЫЛЬ: Выполняем консольную команду выдачи предмета с кастомным именем БЕЗ ИСПОЛЬЗОВАНИЯ МЕТА-КЛАССОВ JAVA
+        String cmd = "give " + p.getName() + " " + matKey + "{display:{Name:'{\"text\":\"" + name + "\",\"italic\":false}'}} 1";
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), cmd);
         p.sendMessage("§a[Успешно] §7Вы приобрели товар за " + price + " душ!");
     }
 }
