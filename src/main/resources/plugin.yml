@@ -1,9 +1,0 @@
-name: SoulShop
-version: 1.0
-main: ru.yourname.soulshop.Main
-api-version: 1.16
-author: AnarchyDeveloper
-commands:
-  aurs:
-    description: Открыть меню мистического Монаха
-    permission: soulshop.use
