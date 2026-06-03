@@ -15,25 +15,20 @@ import java.util.Random;
 public class SoulListener implements Listener {
 
     private final Main plugin;
-    private final MenuManager menuManager;
     private final Random random = new Random();
 
-    public SoulListener(Main plugin, MenuManager menuManager) {
+    public SoulListener(Main plugin) {
         this.plugin = plugin;
-        this.menuManager = menuManager;
     }
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player victim = event.getEntity();
         Player killer = victim.getKiller();
-
         if (killer == null || killer == victim) return;
-
         String worldName = victim.getWorld().getName().toLowerCase();
         if (worldName.contains("duel") || worldName.contains("arena")) return;
 
-        // Шанс 25% на дроп кастомной души игрока
         if (random.nextInt(100) < 25) {
             ItemStack soul = createSoulItem(victim.getName());
             event.getDrops().add(soul);
@@ -44,7 +39,7 @@ public class SoulListener implements Listener {
     public void onNPCInteract(PlayerInteractEntityEvent event) {
         if (event.getRightClicked().getName() != null && event.getRightClicked().getName().contains("Монах")) {
             event.setCancelled(true);
-            menuManager.openMainMenu(event.getPlayer());
+            plugin.openMainMenu(event.getPlayer());
         }
     }
 
