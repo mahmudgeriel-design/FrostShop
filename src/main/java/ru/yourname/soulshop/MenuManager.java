@@ -25,7 +25,6 @@ public class MenuManager implements Listener {
 
     public void openMainMenu(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, mainTitle);
-        
         ItemStack book = new ItemStack(Material.BOOK);
         ItemMeta bookMeta = book.getItemMeta();
         if (bookMeta != null) {
@@ -43,13 +42,11 @@ public class MenuManager implements Listener {
             chest.setItemMeta(chestMeta);
         }
         inv.setItem(13, chest);
-
         player.openInventory(inv);
     }
 
     public void openShopMenu(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, shopTitle);
-        
         inv.setItem(10, createShopItem(Material.PAPER, "§cСвиток \"Метеор\"", 5, "§7Вызывает мощный взрыв пламени."));
         inv.setItem(11, createShopItem(Material.FIREWORK_STAR, "§bСвиток \"Священный Купол\"", 8, "§7Создает защитный барьер."));
         inv.setItem(12, createShopItem(Material.ENDER_PEARL, "§eСвиток \"Подмена Реальности\"", 6, "§7Меняет местами с врагом."));
@@ -59,7 +56,6 @@ public class MenuManager implements Listener {
         inv.setItem(16, createShopItem(Material.IRON_INGOT, "§7Сфера Магнитный Импульс", 10, "§7Отбивает стрелы и перлы."));
         inv.setItem(17, createShopItem(Material.FLINT, "§8Сфера Перегрузка", 14, "§7Тратит HP, но ломает броню врага в 3х."));
         inv.setItem(18, createShopItem(Material.CLOCK, "§dСфера Хронос", 18, "§7Возврат в точку через 6 сек."));
-        
         player.openInventory(inv);
     }
 
@@ -91,7 +87,6 @@ public class MenuManager implements Listener {
         } else if (title.equals(shopTitle)) {
             event.setCancelled(true);
             int slot = event.getRawSlot();
-            
             switch (slot) {
                 case 10 -> handlePurchase(player, 5, Material.PAPER, "§cСвиток \"Метеор\"", "meteor");
                 case 11 -> handlePurchase(player, 8, Material.FIREWORK_STAR, "§bСвиток \"Священный Купол\"", "dome");
@@ -106,51 +101,44 @@ public class MenuManager implements Listener {
         }
     }
 
-    private void handlePurchase(Player player, int price, Material mat, String name, String typeKey) {
-        if (getSoulsCount(player) >= price) {
-            takeSouls(player, price);
-            ItemStack item = new ItemStack(mat);
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(name);
-                meta.getPersistentDataContainer().set(plugin.getSoulKey(), PersistentDataType.STRING, typeKey);
-                item.setItemMeta(meta);
-            }
-            player.getInventory().addItem(item);
-            player.sendMessage("§a[Успешно] §7Вы приобрели товар за " + price + " душ!");
-        } else {
-            player.sendMessage("§c[Ошибка] §7Недостаточно Душ.");
-        }
-    }
-
-    private int getSoulsCount(Player player) {
-        int count = 0;
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.PLAYER_HEAD && item.hasItemMeta()) {
-                if (item.getItemMeta().getPersistentDataContainer().has(plugin.getSoulKey(), PersistentDataType.BYTE)) {
-                    count += item.getAmount();
+    private void handlePurchase(Player p, int price, Material m, String name, String key) {
+        int souls = 0;
+        for (ItemStack i : p.getInventory().getContents()) {
+            if (i != null && i.getType() == Material.PLAYER_HEAD && i.hasItemMeta()) {
+                if (i.getItemMeta().getPersistentDataContainer().has(plugin.getSoulKey(), PersistentDataType.BYTE)) {
+                    souls += i.getAmount();
                 }
             }
         }
-        return count;
-    }
-
-    private void takeSouls(Player player, int amount) {
-        ItemStack[] contents = player.getInventory().getContents();
+        if (souls < price) {
+            p.sendMessage("§c[Ошибка] §7Недостаточно Душ.");
+            return;
+        }
+        int take = price;
+        ItemStack[] contents = p.getInventory().getContents();
         for (int i = 0; i < contents.length; i++) {
             ItemStack item = contents[i];
             if (item != null && item.getType() == Material.PLAYER_HEAD && item.hasItemMeta()) {
                 if (item.getItemMeta().getPersistentDataContainer().has(plugin.getSoulKey(), PersistentDataType.BYTE)) {
-                    if (item.getAmount() > amount) {
-                        item.setAmount(item.getAmount() - amount);
+                    if (item.getAmount() > take) {
+                        item.setAmount(item.getAmount() - take);
                         break;
                     } else {
-                        amount -= item.getAmount();
-                        player.getInventory().setItem(i, null);
-                        if (amount <= 0) break;
+                        take -= item.getAmount();
+                        p.getInventory().setItem(i, null);
+                        if (take <= 0) break;
                     }
                 }
             }
         }
+        ItemStack item = new ItemStack(m);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(name);
+            meta.getPersistentDataContainer().set(plugin.getSoulKey(), PersistentDataType.STRING, key);
+            item.setItemMeta(meta);
+        }
+        p.getInventory().addItem(item);
+        p.sendMessage("§a[Успешно] §7Вы приобрели товар за " + price + " душ!");
     }
 }
